@@ -210,6 +210,10 @@ bar {
         }
 }
 
+# Lock
+bindsym $mod+p exec i3lock --color 000000
+bindsym $mod+Shift+p exec i3lock --color 000000 && systemctl suspend
+
 # Screenshot
 bindsym Print exec flameshot gui
 exec dunst # cathces flameshot notification; prevents crash
