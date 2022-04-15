@@ -13,15 +13,17 @@ alias ls='ls --color=auto'
 PS1="\[$(tput sgr0)\]\[\033[38;5;14m\][\u@\h\[$(tput sgr0)\] \w\[$(tput sgr0)\]\[\033[38;5;14m\]]\[$(tput sgr0)\]\\$ \[$(tput sgr0)\]"
 
 # Variables
-EDITOR=micro
+export EDITOR=micro
 
 # Custom
+alias sudo="sudo " # allows aliases to work in sudo
 alias s="sudo"
 
 alias pacman="sudo pacman"
 alias i="yay -S"
 alias u="yay -Syu"
-alias r="yay -R"
+alias r="yay -Rs" # -s removes unneeded dependencies
+alias rn="yay -Rns" # -n removes config files
 
 alias cls="clear"
 alias la="ls -a"
@@ -29,4 +31,3 @@ alias la="ls -a"
 alias termbin="nc termbin.com 9999"
 
 alias e="exa"
-eval "$(zoxide init bash)" # starts "z" command
