@@ -215,7 +215,7 @@ bar {
 
 # Lock
 bindsym $mod+p exec i3lock --color 000000
-bindsym $mod+Shift+p exec i3lock --color 000000 && systemctl suspend
+bindsym $mod+Shift+p exec i3lock --color 000000 && sudo systemctl suspend
 
 # Screenshot
 bindsym Print exec flameshot gui
@@ -234,3 +234,8 @@ exec env LD_PRELOAD=/usr/lib/spotify-adblock.so spotify %U #blocks spotify ads
 #exec feh --bg-fill /home/elia/Pictures/xavier-cuenca-w4-3.jpg # sets wallpaper
 exec feh --bg-fill /home/elia/Pictures/weirdsun-without-cc.jpeg # sets wallpaper
 exec xrandr --output DVI-D-0 --primary --mode 1920x1080 --pos 0x0 --rotate normal --output HDMI-0 --mode 1920x1080 --pos 1920x0 --rotate normal --output DP-0 --off --output DP-1 --off --output DP-2 --off --output DP-3 --off --output DP-4 --off --output DP-5 --off
+
+# Gaps
+gaps inner 5
+gaps outer 1
+for_window [class=.*] border pixel 0 # Disables titlebars (needed for i3 gaps to work properly)
