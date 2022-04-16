@@ -13,7 +13,7 @@ alias ls='ls --color=auto'
 PS1="\[$(tput sgr0)\]\[\033[38;5;14m\][\u@\h\[$(tput sgr0)\] \w\[$(tput sgr0)\]\[\033[38;5;14m\]]\[$(tput sgr0)\]\\$ \[$(tput sgr0)\]"
 
 # Variables
-export EDITOR=micro
+export EDITOR="/usr/bin/micro"
 
 # Custom
 alias sudo="sudo " # allows aliases to work in sudo
