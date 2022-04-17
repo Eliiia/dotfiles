@@ -1,0 +1,41 @@
+align=center
+separator=|
+color=#ebdbb2
+separator_block_width=15
+markup=pango
+
+
+
+[mediaplayer]
+command=playerctl metadata --format "{{ artist }} <span color=\"#8ec07c\">-</span> {{ title }}"
+interval=2
+label=<span color="#8ec07c"> </span>
+
+#[volume] 
+# Download `pamixer` package
+#command=echo "hi"
+#command=pamixer --get-volume
+#command=playerctl metadata --format "Volume: {{ volume * 100 }}" | awk '{ printf "%i%\n", $1 }'
+#interval=1
+#label=<span color="#8ec07c"> </span>
+
+#[cpu_stats]
+# Download sysstats package
+#command=sar -u 1 1 | awk 'FNR == 5 { printf "%04.1f<span color=\"#ff5555\">%</span>", (100 - $8) } ' && sensors | awk '{ if ($1 == "CPU" && $2 == "Temperature:") { gsub(/[+°C]/, "") ; printf " %i<span color=\"#ff5555\">°C</span>\n", $3 } }'
+#interval=2
+#label=<span color="#ff5555"><b>CPU: </b></span>
+
+[gpu_stats]
+command=nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | awk '{ printf "%02i%", $0}' && nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | awk '{ printf " %i°C\n", $0}'
+label=<span color="#8ec07c"><b>GPU: </b></span>
+interval=2
+
+[memory]
+command=free --giga | awk 'FNR==2{ printf "%i<span color=\"#8ec07c\"> GiB</span>\n", $3 }'
+interval=2
+#label=<span color="#8ec07c">RAM: </span>
+
+[time]
+command=date +"%H:%M"
+interval=60
+#label=<span color="#8ec07c"> </span>
