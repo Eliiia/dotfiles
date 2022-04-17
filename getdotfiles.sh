@@ -9,6 +9,7 @@ rm -rf ./.bashrc ./.config/
 mkdir ./.config
 mkdir ./.config/i3
 mkdir ./.config/i3status
+mkdir ./.config/i3blocks
 mkdir ./.config/alacritty
 
 # bashrc
@@ -17,6 +18,7 @@ cp ~/.bashrc ./.bashrc
 # i3
 cp -r ~/.config/i3/ ./.config/
 cp -r ~/.config/i3status/ ./.config/
+cp -r ~/.config/i3blocks/ ./.config/
 
 # alacritty (terminal)
 cp -r ~/.config/alacritty/ ./.config/
