@@ -14,10 +14,13 @@ PS1="\[$(tput sgr0)\]\[\033[38;5;14m\][\u@\h\[$(tput sgr0)\] \w\[$(tput sgr0)\]\
 
 # Variables
 export EDITOR="/usr/bin/micro"
+export PATH=$PATH:/home/elia/.spicetify
 
 # Custom
 alias sudo="sudo " # allows aliases to work in sudo
 alias s="sudo"
+
+alias systemctl="sudo systemctl"
 
 alias pacman="sudo pacman"
 alias i="yay -S"
