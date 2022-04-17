@@ -12,8 +12,9 @@
 set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font
-# is used in the bar {} block below.
-font pango:NotoSans-Regular 10
+# is used in the bar{} block below.
+font pango: Noto Sans Regular 10
+#font pango:NotoSans-Regular 10
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
@@ -199,6 +200,9 @@ hide_edge_borders both
 # finds out, if available)
 bar {
         status_command i3status
+		font pango: Noto Sans Regular 10
+
+		tray_output none
 
         colors {
 		background $bg-color
@@ -220,11 +224,6 @@ bindsym $mod+Shift+p exec i3lock --color 000000 && sudo systemctl suspend
 # Screenshot
 bindsym Print exec flameshot gui
 exec flameshot # starts it on i3 start
-exec dunst # catches flameshot notification; prevents crash
-
-# Indicate that specific apps have to go on specific workspaces
-#assign [class="spotify"] $ws10
-# Doesn't work for some reason
 
 # Automatically start applications
 exec discord
@@ -232,7 +231,8 @@ exec librewolf
 exec env LD_PRELOAD=/usr/lib/spotify-adblock.so spotify %U #blocks spotify ads
 
 #exec feh --bg-fill /home/elia/Pictures/xavier-cuenca-w4-3.jpg # sets wallpaper
-exec feh --bg-fill /home/elia/Pictures/weirdsun-without-cc.jpeg # sets wallpaper
+#exec feh --bg-fill /home/elia/Pictures/weirdsun-without-cc.jpeg # sets wallpaper
+exec xsetroot -solid "#282828" # sets #282828 to wallpaper 
 exec xrandr --output DVI-D-0 --primary --mode 1920x1080 --pos 0x0 --rotate normal --output HDMI-0 --mode 1920x1080 --pos 1920x0 --rotate normal --output DP-0 --off --output DP-1 --off --output DP-2 --off --output DP-3 --off --output DP-4 --off --output DP-5 --off
 
 # Gaps
