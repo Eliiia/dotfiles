@@ -19,16 +19,16 @@ label=<span color="#8ec07c"> </span>
 #interval=1
 #label=<span color="#8ec07c"> </span>
 
-#[cpu_stats]
-# Download sysstats package
-#command=sar -u 1 1 | awk 'FNR == 5 { printf "%04.1f<span color=\"#ff5555\">%</span>", (100 - $8) } ' && sensors | awk '{ if ($1 == "CPU" && $2 == "Temperature:") { gsub(/[+°C]/, "") ; printf " %i<span color=\"#ff5555\">°C</span>\n", $3 } }'
-#interval=2
-#label=<span color="#ff5555"><b>CPU: </b></span>
+[cpu_stats]
+full_text=<span color="#8ec07c"><b>CPU:</b></span> 0.00% 00.0°C 
+command=sh ~/.config/i3blocks/scripts/cpu_info.sh
+interval=repeat
+label=<span color="#8ec07c"><b>CPU:</b></span>
 
 [gpu_stats]
 command=nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | awk '{ printf "%02i%", $0}' && nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | awk '{ printf " %i°C\n", $0}'
-label=<span color="#8ec07c"><b>GPU: </b></span>
 interval=2
+label=<span color="#8ec07c"><b>GPU: </b></span>
 
 [memory]
 command=free --giga | awk 'FNR==2{ printf "%i<span color=\"#8ec07c\"> GiB</span>\n", $3 }'
@@ -38,4 +38,3 @@ interval=2
 [time]
 command=date +"%H:%M"
 interval=60
-#label=<span color="#8ec07c"> </span>
