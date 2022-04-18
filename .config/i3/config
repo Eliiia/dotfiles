@@ -238,4 +238,4 @@ exec xrandr --output DVI-D-0 --primary --mode 1920x1080 --pos 0x0 --rotate norma
 # Gaps
 gaps inner 5
 gaps outer 1
-for_window [class=.*] border pixel 0 # Disables titlebars (needed for i3 gaps to work properly)
+for_window [class="^.*"] border pixel 0 # Disables titlebars (needed for i3 gaps to work properly)
