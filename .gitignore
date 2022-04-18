@@ -1,2 +1,7 @@
 # i3 config.save file
 .config/i3/config.save
+
+# betterdiscordstuff
+*.config.json
+*.raw.css
+*.data.json
