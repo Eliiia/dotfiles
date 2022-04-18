@@ -11,6 +11,7 @@ mkdir ./.config/i3
 mkdir ./.config/i3status
 mkdir ./.config/i3blocks
 mkdir ./.config/alacritty
+mkdir ./.config/BetterDiscord
 
 # bashrc
 cp ~/.bashrc ./.bashrc
@@ -22,3 +23,7 @@ cp -r ~/.config/i3blocks/ ./.config/
 
 # alacritty (terminal)
 cp -r ~/.config/alacritty/ ./.config/
+
+# discord
+cp -r ~/.config/BetterDiscord ./.config/
+rm -r ./.config/BetterDiscord/data/
