@@ -11,13 +11,10 @@ command=playerctl metadata --format "{{ artist }} <span color=\"#8ec07c\">-</spa
 interval=2
 label=<span color="#8ec07c"> </span>
 
-#[volume] 
-# Download `pamixer` package
-#command=echo "hi"
-#command=pamixer --get-volume
-#command=playerctl metadata --format "Volume: {{ volume * 100 }}" | awk '{ printf "%i%\n", $1 }'
-#interval=1
-#label=<span color="#8ec07c"> </span>
+[volume]
+command=pamixer --get-volume | awk '{ printf "%s%\n", $1 }'
+interval=1
+label=<span color="#8ec07c"> </span>
 
 [cpu_stats]
 full_text=<span color="#8ec07c"><b>CPU:</b></span> 0.00% 00.0°C 
@@ -33,7 +30,6 @@ label=<span color="#8ec07c"><b>GPU: </b></span>
 [memory]
 command=free --giga | awk 'FNR==2{ printf "%i<span color=\"#8ec07c\"> GiB</span>\n", $3 }'
 interval=2
-#label=<span color="#8ec07c">RAM: </span>
 
 [time]
 command=date +"%H:%M"
