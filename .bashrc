@@ -15,6 +15,7 @@ PS1="\[$(tput sgr0)\]\[\033[38;5;14m\][\u@\h\[$(tput sgr0)\] \w\[$(tput sgr0)\]\
 # Variables
 export EDITOR="/usr/bin/micro"
 export PATH=$PATH:/home/elia/.spicetify
+. "$HOME/.cargo/env"
 
 # Custom
 alias sudo="sudo " # allows aliases to work in sudo
