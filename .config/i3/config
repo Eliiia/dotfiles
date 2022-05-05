@@ -227,7 +227,7 @@ exec flameshot # starts it on i3 start
 
 # Automatically start applications
 exec discord
-exec librewolf
+exec firefox
 exec env LD_PRELOAD=/usr/lib/spotify-adblock.so spotify %U #blocks spotify ads
 
 #exec feh --bg-fill /home/elia/Pictures/xavier-cuenca-w4-3.jpg # sets wallpaper

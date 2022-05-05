@@ -26,8 +26,8 @@ alias systemctl="sudo systemctl"
 alias pacman="sudo pacman"
 alias i="yay -S"
 alias u="yay -Syu"
-alias r="yay -Rs" # -s removes unneeded dependencies
-alias rn="yay -Rns" # -n removes config files
+alias r="yay -Rcs" # -s and -c remove unneeded dependencies
+alias rn="yay -Rcns" # -n removes config files
 
 alias cls="clear"
 alias la="ls -a"
