@@ -1,7 +1,7 @@
 /**
  * @name SendTimestamps
- * @version 1.1.10
- * @description Use Discord's latest feature of using timestamps in your messages easily.
+ * @version 2.1.4
+ * @description Send timestamps in your messages easily by adding them in {{...}} or using the button.
  * @author Taimoor
  * @authorId 220161488516546561
  * @authorLink https://github.com/Taimoor-Tariq
@@ -34,47 +34,99 @@
 @else@*/
 
 module.exports = (() => {
-    const config = {"info":{"name":"SendTimestamps","version":"1.1.10","description":"Use Discord's latest feature of using timestamps in your messages easily.","author":"Taimoor","authorId":"220161488516546561","authorLink":"https://github.com/Taimoor-Tariq","source":"https://github.com/Taimoor-Tariq/BetterDiscordStuff/blob/main/Plugins/SendTimestamps/SendTimestamps.plugin.js","github_raw":"https://raw.githubusercontent.com/Taimoor-Tariq/BetterDiscordStuff/main/Plugins/SendTimestamps/SendTimestamps.plugin.js","donate":"https://ko-fi.com/TaimoorTariq","authors":[{"name":"Taimoor","discord_id":"220161488516546561"}]},"changelog":[{"title":"Fixed","items":["Plugin works again!!!"]},{"title":"Bugs Squashed","type":"fixed","items":["Fixed bug causing discord to crash when entering time manually."]}],"main":"index.js"};
+    const config = {
+        info: { name: 'SendTimestamps', version: '2.1.4', description: 'Send timestamps in your messages easily by adding them in {{...}} or using the button.', author: 'Taimoor', authorId: '220161488516546561', authorLink: 'https://github.com/Taimoor-Tariq', source: 'https://github.com/Taimoor-Tariq/BetterDiscordStuff/blob/main/Plugins/SendTimestamps/SendTimestamps.plugin.js', github_raw: 'https://raw.githubusercontent.com/Taimoor-Tariq/BetterDiscordStuff/main/Plugins/SendTimestamps/SendTimestamps.plugin.js', donate: 'https://ko-fi.com/TaimoorTariq', authors: [{ name: 'Taimoor', discord_id: '220161488516546561' }] },
+        changelog: [
+            { title: 'v2.1.4 - Bug Fixes', items: ['Plugin now properly remembers last used timestamp fromat.', 'Fixed relative time not swoing right time in modal.', 'Fixed attach-menu hover errors.', 'Fixed typos in changelog.'] },
+            { title: 'v2.1.3 - Improvements and Bug Fixes', type: 'improved', items: ['You can now just enter the hour without minutes when using the `{{...}}` method.', 'Fixed timestamp format selection covering multiline inputs'] },
+            { title: 'v2.1.2 - Improvements!', type: 'improved', items: ['You can now select what format to send the timestamp in before sending when using `{{...}}`.', 'Fixed bug where the button hover was not working in attach-menu sometimes.'] },
+        ],
+        main: 'index.js',
+    };
 
-    return !global.ZeresPluginLibrary ? class {
-        constructor() {this._config = config;}
-        getName() {return config.info.name;}
-        getAuthor() {return config.info.authors.map(a => a.name).join(", ");}
-        getDescription() {return config.info.description;}
-        getVersion() {return config.info.version;}
-        load() {
-            BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
-                confirmText: "Download Now",
-                cancelText: "Cancel",
-                onConfirm: () => {
-                    require("request").get("https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js", async (error, response, body) => {
-                        if (error) return require("electron").shell.openExternal("https://betterdiscord.net/ghdl?url=https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js");
-                        await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0PluginLibrary.plugin.js"), body, r));
-                    });
-                }
-            });
-        }
-        start() {}
-        stop() {}
-    } : (([Plugin, Api]) => {
-        const plugin = (Plugin, Library) => {
-    const
-        css = `div[class*="attachWrapper"] {
-    display: flex;
-    flex-direction: row;
+    return !global.ZeresPluginLibrary
+        ? class {
+              constructor() {
+                  this._config = config;
+              }
+              getName() {
+                  return config.info.name;
+              }
+              getAuthor() {
+                  return config.info.authors.map((a) => a.name).join(', ');
+              }
+              getDescription() {
+                  return config.info.description;
+              }
+              getVersion() {
+                  return config.info.version;
+              }
+              load() {
+                  BdApi.showConfirmationModal('Library Missing', `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
+                      confirmText: 'Download Now',
+                      cancelText: 'Cancel',
+                      onConfirm: () => {
+                          require('request').get('https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js', async (error, response, body) => {
+                              if (error) return require('electron').shell.openExternal('https://betterdiscord.net/ghdl?url=https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js');
+                              await new Promise((r) => require('fs').writeFile(require('path').join(BdApi.Plugins.folder, '0PluginLibrary.plugin.js'), body, r));
+                          });
+                      },
+                  });
+              }
+              start() {}
+              stop() {}
+          }
+        : (([Plugin, Api]) => {
+              const plugin = (Plugin, Api) => {
+                  const {
+                      PluginUtilities,
+                      Patcher,
+                      Settings,
+                      Modals,
+                      DOMTools,
+                      WebpackModules,
+                      DiscordModules: { React, MessageActions, Slider, Dropdown, SwitchRow },
+                  } = Api;
+                  const ComponentDispatch = WebpackModules.getByProps('ComponentDispatch').ComponentDispatch;
+                  const ComponentActions = WebpackModules.getByProps('ComponentActions').ComponentActions;
+                  const PermissionStore = BdApi.findModuleByProps('Permissions', 'ActivityTypes').Permissions;
+                  const css = `.timestamp-button {
+    margin-top: 4px;
+    max-height: 40px;
+    justify-content: center;
+    background-color: transparent;
 }
 
-.timestamp-button { margin-top: 4px; max-height: 40px; justify-content: center; }
-.timestamp-button button { min-height: 32px; min-width: 32px; margin-left: 0px; background-color: transparent; }
-.timestamp-button svg { width: 21px; height: 21px; color: var(--interactive-normal); }
-.timestamp-button svg:hover { color: var(--interactive-hover); }
+.timestamp-button button {
+    min-height: 32px;
+    min-width: 32px;
+    background-color: transparent;
+}
+.timestamp-button svg {
+    width: 20px;
+    height: 20px;
+    color: var(--interactive-normal);
+}
+.timestamp-button svg:hover {
+    color: var(--interactive-hover);
+}
 
-div[class*="buttons"] :last-child.timestamp-button { margin-left: 4px; margin-right: 8px; }
-div[class*="attachWrapper"] :nth-child(1).timestamp-button { margin-left: -6px; margin-right: 6px; }
-div[class*="attachWrapper"] :nth-child(n+2).timestamp-button { margin-left: -10px; margin-right: 8px; }
+.channel-attach-button {
+    display: flex;
+    margin-right: 8px;
+}
 
-.timestamp-modal { padding: 10px 0; }
-.timestamp-modal-custom-input {
+.channel-attach-button .attachButton-_ACFSu {
+    padding: 10px 4px;
+}
+
+.timestamp-input-label {
+    font-size: 16px;
+    color: var(--text-normal);
+    margin-left: 4px;
+}
+
+.timestamp-input {
     font-size: 16px;
     box-sizing: border-box;
     width: 100%;
@@ -82,8 +134,19 @@ div[class*="attachWrapper"] :nth-child(n+2).timestamp-button { margin-left: -10p
     color: var(--text-normal);
     background-color: var(--deprecated-text-input-bg);
     border: 1px solid var(--deprecated-text-input-border);
-    transition: border-color .2s ease-in-out;
+    transition: border-color 0.2s ease-in-out;
     padding: 10px;
+    margin: 8px 0 12px 0px;
+}
+
+.timestamp-input-dropdown {
+    font-size: 16px;
+    border-radius: 3px;
+    color: var(--text-normal);
+    background-color: var(--deprecated-text-input-bg);
+    border: 1px solid var(--deprecated-text-input-border);
+    transition: border-color 0.2s ease-in-out;
+    margin: 8px 0 12px 0px;
 }
 
 input::-webkit-calendar-picker-indicator {
@@ -96,266 +159,678 @@ input::-webkit-calendar-picker-indicator {
     cursor: pointer;
 }
 
-input[type="time"]::-webkit-calendar-picker-indicator { background-image: url("data:image/svg+xml,%3Csvg role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='currentColor' d='M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z'%3E%3C/path%3E%3C/svg%3E"); }
-input[type="date"]::-webkit-calendar-picker-indicator { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z'/%3E%3C/svg%3E"); }`,
-        buttonHTML = `<div class="buttonContainer-2lnNiN timestamp-button">
-    <button aria-label="Enter timestamp" type="button">
-        <svg role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-            <path fill="currentColor" d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"></path>
-        </svg>
-    </button>
-</div>`,
-        PermissionsStore = BdApi.findModuleByProps("Permissions", "ActivityTypes").Permissions,
-        GuildsStore = BdApi.findModuleByProps("getGuilds").getGuilds(),
-        { DiscordSelectors, PluginUtilities, DOMTools, Modals, WebpackModules, DiscordModules: { NavigationUtils } } = Api,
-        { Logger, Settings } = Library,
-        { FormItem } = BdApi.findModuleByProps("FormItem"),
-        Dropdown = WebpackModules.getByProps("SingleSelect").SingleSelect;
+input[type='time']::-webkit-calendar-picker-indicator {
+    background-image: url("data:image/svg+xml,%3Csvg role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='currentColor' d='M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z'%3E%3C/path%3E%3C/svg%3E");
+}
+input[type='date']::-webkit-calendar-picker-indicator {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z'/%3E%3C/svg%3E");
+}
 
-    let inputTime = new Date(), inputFormat = "f",
-        setFormatOpts = null;
+.timestamp-formats-wrapper {
+    position: absolute;
+    top: 0;
+    width: 90%;
+}
 
-    const
-        units = {
-            year  : 24 * 60 * 60 * 1000 * 365,
-            month : 24 * 60 * 60 * 1000 * 365/12,
-            day   : 24 * 60 * 60 * 1000,
-            hour  : 60 * 60 * 1000,
-            minute: 60 * 1000,
-            second: 1000
-        },
-        rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' }),
-        isValidDate = (d) => {
-            return d instanceof Date && !isNaN(d);
-        },
-        getRelativeTime = (d1, d2 = new Date()) => {
-            let elapsed = d1 - d2
+.timestamp-formats-selector {
+    position: absolute;
+    bottom: 0;
+    left: 2rem;
+    width: 100%;
+    background-color: var(--background-tertiary);
+    box-shadow: var(--elevation-high);
+    color: var(--text-normal);
+    border-radius: 5px;
+    padding: 8px 12px;
+}
 
-            // "Math.abs" accounts for both "past" & "future" scenarios
-            for (let u in units)
-                if (Math.abs(elapsed) > units[u] || u == 'second')
-                    return rtf.format(Math.round(elapsed/units[u]), u)
-        },
-        createUpdateWrapper = (Component, changeProp = "onChange") => props => {
-            const [value, setValue] = BdApi.React.useState(props["value"]);
+.timestamp-formats-selects {
+    display: flex;
+    flex-direction: row;
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
-            if (!!setFormatOpts && isValidDate(inputTime)) {
-                let timeFormats = {
-                    t: inputTime.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit'}).replace(' at', ''),
-                    T: inputTime.toLocaleString(undefined, { timeStyle: 'medium' }).replace(' at', ''),
-                    d: inputTime.toLocaleString(undefined, { dateStyle: 'short' }).replace(' at', ''),
-                    D: inputTime.toLocaleString(undefined, { dateStyle: 'long' }).replace(' at', ''),
-                    f: inputTime.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' }).replace(' at', ''),
-                    F: inputTime.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }).replace(' at', ''),
-                    R: getRelativeTime(inputTime)
-                };
+.timestamp-formats-selects select {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--background-secondary);
+    background-color: var(--channeltextarea-background);
+    color: var(--text-normal);
+    font-size: 1rem;
+    flex-grow: 1;
+}
+`;
 
-                setFormatOpts([ {value: "t", label: timeFormats.t}, {value: "T", label: timeFormats.T}, {value: "d", label: timeFormats.d}, {value: "D", label: timeFormats.D}, {value: "f", label: timeFormats.f}, {value: "F", label: timeFormats.F}, {value: "R", label: timeFormats.R} ]);
-            }
+                  const Button = WebpackModules.getByProps('Button').Button;
 
-            return BdApi.React.createElement(Component, {
-                ...props,
-                ["value"]: value,
-                [changeProp]: value => {
-                    if (typeof props[changeProp] === "function") props[changeProp](value);
-                    if (props["id"] == "timestamp-modal-time" || props["id"] == "timestamp-modal-date") setValue(value.target.value);
-                    else setValue(value);
-                }
-            });
-        },
-        updateFormatPreview = (Component, changeProp = "onChange") => props => {
-            const [value, setValue] = BdApi.React.useState(props["value"]);
+                  const canSendMessages = (channelId) => {
+                      return BdApi.findModuleByProps('getChannelPermissions').canWithPartialContext(PermissionStore.SEND_MESSAGES, { channelId });
+                  };
 
-            let timeFormats = {
-                t: inputTime.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit'}).replace(' at', ''),
-                T: inputTime.toLocaleString(undefined, { timeStyle: 'medium' }).replace(' at', ''),
-                d: inputTime.toLocaleString(undefined, { dateStyle: 'short' }).replace(' at', ''),
-                D: inputTime.toLocaleString(undefined, { dateStyle: 'long' }).replace(' at', ''),
-                f: inputTime.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' }).replace(' at', ''),
-                F: inputTime.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }).replace(' at', ''),
-                R: getRelativeTime(inputTime)
-            };
+                  return class SendTimestamp extends Plugin {
+                      constructor() {
+                          super();
 
-            const [FormatOptions, setFormatOptions] = BdApi.React.useState([ {value: "t", label: timeFormats.t}, {value: "T", label: timeFormats.T}, {value: "d", label: timeFormats.d}, {value: "D", label: timeFormats.D}, {value: "f", label: timeFormats.f}, {value: "F", label: timeFormats.F}, {value: "R", label: timeFormats.R} ]);
+                          this.defaultSettings = {
+                              buttonOnRight: true,
+                              buttonIndex: 0,
+                              chatButtonsLength: 1,
+                              timestampFormat: 'f',
+                              replaceInMessages: true,
+                              showInAttachMenu: false,
+                          };
 
-            setFormatOpts = setFormatOptions;
+                          this.forceOnRight = false;
 
-            props.options = FormatOptions;
+                          this.sendFomrmatOptions = {
+                              0: 'F',
+                          };
+                      }
 
-            return BdApi.React.createElement(Component, {
-                ...props,
-                ["value"]: value,
-                [changeProp]: value => {
-                    if (typeof props[changeProp] === "function") props[changeProp](value);
-                    setValue(value);
-                },
-            });
-        };
+                      onStart() {
+                          PluginUtilities.addStyle(this.getName(), css);
+                          this.patchButton();
+                          if (this.settings.replaceInMessages) this.patchMessageReplace();
+                      }
 
-    return class SendTimestamp extends Plugin {
-        constructor() {
-            super();
-            this.defaultSettings = {};
-            this.defaultSettings.tabIndex = 1;
-            this.defaultSettings.onLeft = true;
-        }
+                      onStop() {
+                          this.domObserver?.unsubscribeAll();
+                          PluginUtilities.removeStyle(this.getName());
+                          Patcher.unpatchAll();
+                      }
 
-        onStart() {
-            PluginUtilities.addStyle(this.getName(), css);
-            this.addButton();
-        }
+                      load() {
+                          const myAdditions = (e) => {
+                              const pluginCard = e.target.querySelector(`#${this.getName()}-card`);
+                              if (pluginCard) {
+                                  const controls = pluginCard.querySelector('.bd-controls');
+                                  const changeLogButton = DOMTools.createElement(
+                                      `<button class="bd-button bd-addon-button bd-changelog-button" style"position: relative;"> <style> .bd-changelog-button-tooltip { visibility: hidden; position: absolute; background-color: var(--background-floating); box-shadow: var(--elevation-high); color: var(--text-normal); border-radius: 5px; font-size: 14px; line-height: 16px; white-space: nowrap; font-weight: 500; padding: 8px 12px; z-index: 999999; transform: translate(0, -125%); } .bd-changelog-button-tooltip:after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -3px; border-width: 3x; border-style: solid; border-color: var(--background-floating) transparent transparent transparent; } .bd-changelog-button:hover .bd-changelog-button-tooltip { visibility: visible; } </style> <span class="bd-changelog-button-tooltip">Changelog</span> <svg viewBox="0 0 24 24" fill="#FFFFFF" style="width: 20px; height: 20px;"> <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" /> </svg> </button>`
+                                  );
+                                  changeLogButton.addEventListener('click', () => {
+                                      Api.Modals.showChangelogModal(this.getName(), this.getVersion(), this._config.changelog);
+                                  });
 
-        onStop() {
-            this.removeButton();
-            PluginUtilities.removeStyle(this.getName());
-        }
+                                  if (!controls.querySelector('.bd-changelog-button') && this._config.changelog?.length > 0) controls.prepend(changeLogButton);
+                              }
+                          };
 
-        getSettingsPanel() {
-            this.removeButton();
+                          this.domObserver = new Api.DOMTools.DOMObserver();
+                          this.domObserver.subscribeToQuerySelector(myAdditions, `#${this.getName()}-card`);
+                      }
 
-            // temporary fix???, does not work 90% of the time, will find fix soon
-            let form = document.querySelector("form")?.querySelector("div[class*='inner']"),
-                btnsCount = 1;
+                      getSettingsPanel() {
+                          class PluginSettings extends React.Component {
+                              constructor(props) {
+                                  super(props);
+                                  this.plugin = this.props.plugin;
+                                  this.state = this.plugin.settings;
+                              }
 
-            if (!form || form.querySelector("div[class*='placeholder']")?.innerHTML == "You do not have permission to send messages in this channel.") {
-                let cG = null,
-                cC = null;
+                              componentDidUpdate() {
+                                  this.plugin.saveSettings();
+                              }
 
-                for (var g in GuildsStore) {
-                    let ChannelsStore = BdApi.findModuleByProps("getChannels").getChannels(g).SELECTABLE.map(c => { return c.channel }).map(c => { return c.id });
-                    
-                    for (var c in ChannelsStore) {
-                        if (BdApi.findModuleByProps('getChannelPermissions').canWithPartialContext(PermissionsStore.SEND_MESSAGES, { channelId: ChannelsStore[c] })) {
-                            cG = g;
-                            cC = ChannelsStore[c];
-                            break;
-                        }
-                    }
+                              render() {
+                                  const ReplaceInMessages = React.createElement(
+                                      SwitchRow,
+                                      {
+                                          value: this.state.replaceInMessages,
+                                          onChange: (e) => {
+                                              this.plugin.settings.replaceInMessages = e;
+                                              this.setState({ replaceInMessages: e });
+                                          },
+                                          note: 'Enabling this option will convert all the date/time in you message before you send it. Example: "{{dec 2 2020}} or {{10:40am}}".',
+                                      },
+                                      'Replace on message send'
+                                  );
 
-                    if (cG != null) break;
-                }
+                                  const ShowInAttachMenu = React.createElement('div', {
+                                      children: [
+                                          React.createElement(
+                                              'span',
+                                              {
+                                                  className: 'title-2dsDLn',
+                                                  style: {
+                                                      marginTop: '-0.5rem',
+                                                      marginBottom: '0.5rem',
+                                                  },
+                                              },
+                                              'Button Location'
+                                          ),
+                                          React.createElement('div', {
+                                              style: {
+                                                  display: 'flex',
+                                                  gap: '0.5rem',
+                                              },
+                                              children: [
+                                                  React.createElement(
+                                                      Button,
+                                                      {
+                                                          className: `${this.state.showInAttachMenu ? '' : Button.Colors.TRANSPARENT}`,
+                                                          onClick: () => {
+                                                              this.plugin.settings.showInAttachMenu = true;
+                                                              this.setState({ showInAttachMenu: true });
+                                                          },
+                                                      },
+                                                      'In attach menu'
+                                                  ),
+                                                  React.createElement(
+                                                      Button,
+                                                      {
+                                                          className: `${this.state.showInAttachMenu ? Button.Colors.TRANSPARENT : ''}`,
+                                                          onClick: () => {
+                                                              this.plugin.settings.showInAttachMenu = false;
+                                                              this.setState({ showInAttachMenu: false });
+                                                          },
+                                                      },
+                                                      'In chatbar'
+                                                  ),
+                                              ],
+                                          }),
+                                          React.createElement('div', {
+                                              className: 'divider-_0um2u dividerDefault-3C2-ws',
+                                              style: {
+                                                  marginBottom: '1rem',
+                                              },
+                                          }),
+                                      ],
+                                  });
 
-                NavigationUtils.transitionTo(`/channels/${cG}/${cC}`);
-            }
+                                  const ButtonInChat = React.createElement('div', {
+                                      style: {
+                                          display: `${this.state.showInAttachMenu ? 'none' : 'block'}`,
+                                      },
+                                      children: [
+                                          React.createElement(
+                                              SwitchRow,
+                                              {
+                                                  value: this.state.buttonOnRight,
+                                                  onChange: (e) => {
+                                                      this.plugin.settings.buttonOnRight = e;
+                                                      this.setState({ buttonOnRight: e });
+                                                  },
+                                                  note: 'Enabling this option will put the button on the right side of the textarea.',
+                                              },
+                                              'Button on right'
+                                          ),
+                                          React.createElement(
+                                              'span',
+                                              {
+                                                  className: 'title-2dsDLn',
+                                                  style: {
+                                                      marginTop: '-0.5rem',
+                                                      marginBottom: '1.5rem',
+                                                  },
+                                              },
+                                              'Button Postion from left (only works if button is on right)'
+                                          ),
+                                          React.createElement(Slider, {
+                                              style: {
+                                                  cursor: 'pointer',
+                                              },
+                                              initialValue: this.state.buttonIndex + 1,
+                                              min: 0,
+                                              max: this.state.chatButtonsLength - 1,
+                                              onValueChange: (e) => {
+                                                  this.plugin.settings.buttonIndex = e - 1;
+                                                  this.setState({ buttonIndex: e - 1 });
+                                              },
+                                              markers: Array.apply(null, Array(this.state.chatButtonsLength)).map((_, i) => i + 1),
+                                              stickToMarkers: true,
+                                              disabled: !this.state.buttonOnRight,
+                                          }),
+                                      ],
+                                  });
 
-            form = document.querySelector("form")?.querySelector("div[class*='inner']");
-            if (this.settings.onLeft)  form = form.querySelector("div:nth-child(2)");
-            else form = form.querySelector("div[class*='buttons']");
-            btnsCount = form.childElementCount;
+                                  return React.createElement('div', { children: [ReplaceInMessages, ShowInAttachMenu, ButtonInChat] });
+                              }
+                          }
 
-            this.addButton();
+                          return React.createElement(PluginSettings, { plugin: this });
+                      }
 
-            return Settings.SettingPanel.build(this.saveSettings.bind(this),
-                new Settings.Switch("Button on left", "Place button on right with all buttons or on left with the upload button.", this.settings.onLeft, (e) => {
-                    this.settings.onLeft = e;
-                    this.removeButton();
-                    this.addButton();
-                }),
-                new Settings.Slider("Position", "Position of the button from left", 1, btnsCount+1, this.settings.tabIndex, (e) => {
-                    this.settings.tabIndex = e;
-                    this.removeButton();
-                    this.addButton();
-                }, {
-                    markers: Array.apply(null, Array(btnsCount+1)).map(function (x, i) { return i+1; }),
-                    stickToMarkers: true
-                }),
-            );
-        }
+                      showTimestampModal() {
+                          const inputFormat = this.settings.timestampFormat;
 
-        removeButton() {
-            const button = document.querySelector(".timestamp-button");
-            if (button) button.remove();
-        }
+                          const getRelativeTime = (timestamp) => {
+                              const timeElapsed = timestamp - new Date(new Date().getTime() - new Date().getTimezoneOffset() * 180000);
+                              const units = {
+                                  year: 24 * 60 * 60 * 1000 * 365,
+                                  month: (24 * 60 * 60 * 1000 * 365) / 12,
+                                  day: 24 * 60 * 60 * 1000,
+                                  hour: 60 * 60 * 1000,
+                                  minute: 60 * 1000,
+                                  second: 1000,
+                              };
 
-        addButton() {
-            let form = document.querySelector("form")?.querySelector("div[class*='inner']"),
-                button = DOMTools.createElement(buttonHTML);
-            
-            button.addEventListener("click", this.showTimesampModal);
-            
-            if (!form || form.querySelector(".timestamp-button") || form.querySelector("div[class*='placeholder']")?.innerHTML == "You do not have permission to send messages in this channel.") return;
+                              for (let u in units) if (Math.abs(timeElapsed) > units[u] || u == 'second') return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(Math.round(timeElapsed / units[u]), u);
+                          };
 
-            if (this.settings.onLeft) {
-                if (form.querySelector("div:nth-child(2)").getAttribute("role") == "textbox") return form.prepend(button);
-                form = form.querySelector("div:nth-child(2)");
-            }
-            else form = form.querySelector("div[class*='buttons']");
+                          const updateTimeFormat = (format) => {
+                              this.settings.timestampFormat = format;
+                              this.saveSettings();
+                          };
 
-            if (this.settings.tabIndex==1) form.prepend(button);
-            else form.insertBefore(button, form.querySelector(`div:nth-child(${this.settings.tabIndex-1})`)?.nextSibling);
-        }
+                          const isValidDate = (d) => {
+                              return d instanceof Date && !isNaN(d);
+                          };
 
-        showTimesampModal() {
-            inputTime = new Date();
-            inputTime.setSeconds(0);
+                          let inputTimestamp = new Date();
 
-            let dateInput = BdApi.React.createElement(FormItem, {
-                    className: 'timestamp-modal',
-                    title: "Date",
-                    children: [
-                        BdApi.React.createElement(createUpdateWrapper('input'), {
-                            type: "date",
-                            id: "timestamp-modal-date",
-                            value: `${inputTime.getFullYear()}-${inputTime.getMonth()+1<10?`0${inputTime.getMonth()+1}`:inputTime.getMonth()+1}-${inputTime.getDate()<10?`0${inputTime.getDate()}`:inputTime.getDate()}`,
-                            className: "timestamp-modal-custom-input",
-                            onChange: (e) => {
-                                let t = e.target.value.split('-');
-                                inputTime.setFullYear(t[0]);
-                                inputTime.setMonth(t[1] - 1);
-                                inputTime.setDate(t[2]);
-                            }
-                        })
-                    ]
-                }),
-                timeInput = BdApi.React.createElement(FormItem, {
-                    className: 'timestamp-modal',
-                    title: "Time",
-                    id: "timestamp-modal-time-section",
-                    children: [
-                        BdApi.React.createElement(createUpdateWrapper('input'), {
-                            type: "time",
-                            id: "timestamp-modal-time",
-                            value: `${inputTime.getHours()<10?`0${inputTime.getHours()}`:inputTime.getHours()}:${inputTime.getMinutes()<10?`0${inputTime.getMinutes()}`:inputTime.getMinutes()}`,
-                            className: "timestamp-modal-custom-input",
-                            onChange: (e) => {
-                                if (!e.target.value.includes(':')) return;
-                                let t = e.target.value.split(':');
-                                inputTime.setHours(t[0]);
-                                inputTime.setMinutes(t[1]);
-                            }
-                        })
-                    ]
-                }),
-                formatInput = BdApi.React.createElement('div', {
-                    id: "timestamp-modal-format",
-                }, BdApi.React.createElement(FormItem, {
-                    className: 'timestamp-modal',
-                    title: "Format",
-                    children: [
-                        BdApi.React.createElement(updateFormatPreview(Dropdown), { onChange: (format) => { inputFormat = format }, value: inputFormat, options: [{value: "t", label: "Short Time"}, {value: "T", label: "Long Time"}, {value: "d", label: "Short Date"}, {value: "D", label: "Long Date"}, {value: "f", label: "Short Date/Time"}, {value: "F", label: "Long Date/Time"}, {value: "R", label: "Relative Time"}] })
-                    ]
-                }));
- 
-            Modals.showModal( "Select Date and Time", [ dateInput, timeInput, formatInput ], {
-                confirmText: "Enter",
-                onConfirm: () => {
-                    let ts_msg = `<t:${Math.floor(inputTime.getTime()/1000)}:${inputFormat}> `;
-                    BdApi.findModuleByProps("ComponentDispatch").ComponentDispatch.dispatch(BdApi.findModuleByProps("ComponentActions").ComponentActions.INSERT_TEXT, {content: ts_msg, plainText: ts_msg});
-                }
-            });
-        }
+                          class TimestampModalBody extends React.Component {
+                              constructor(props) {
+                                  super(props);
+                                  this.state = {
+                                      timestamp: new Date(new Date(inputTimestamp).getTime() - new Date().getTimezoneOffset() * 60000),
+                                      returnTimestamp: inputTimestamp,
+                                      timestampFormat: inputFormat,
 
+                                      formatOptions: [
+                                          { value: 't', label: 'Short Time' },
+                                          { value: 'T', label: 'Long Time' },
+                                          { value: 'd', label: 'Short Date' },
+                                          { value: 'D', label: 'Long Date' },
+                                          { value: 'f', label: 'Short Date/Time' },
+                                          { value: 'F', label: 'Long Date/Time' },
+                                          { value: 'R', label: 'Relative Time' },
+                                      ],
+                                  };
+                              }
 
-        observer(e) {
-            if (!e.addedNodes.length || !(e.addedNodes[0] instanceof Element)) return;
-            if (e.addedNodes[0].querySelector(DiscordSelectors.Textarea.inner)) {
-                this.addButton(e.addedNodes[0]);
-            }
-        }
-    };
+                              componentDidMount() {
+                                  this.updateFormatOptions();
+                              }
 
-};
-        return plugin(Plugin, Api);
-    })(global.ZeresPluginLibrary.buildPlugin(config));
+                              componentDidUpdate(prevProps, prevState) {
+                                  if (prevState.timestamp != this.state.timestamp) {
+                                      inputTimestamp = this.state.returnTimestamp;
+                                      this.updateFormatOptions();
+                                  }
+                              }
+
+                              updateFormatOptions() {
+                                  const time = new Date(new Date(this.state.timestamp).getTime() - new Date().getTimezoneOffset() * 2 * 60000);
+                                  this.setState({
+                                      formatOptions: [
+                                          { value: 't', label: time.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' }).replace(' at', '') },
+                                          { value: 'T', label: time.toLocaleString(undefined, { timeStyle: 'medium' }).replace(' at', '') },
+                                          { value: 'd', label: time.toLocaleString(undefined, { dateStyle: 'short' }).replace(' at', '') },
+                                          { value: 'D', label: time.toLocaleString(undefined, { dateStyle: 'long' }).replace(' at', '') },
+                                          { value: 'f', label: time.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' }).replace(' at', '') },
+                                          { value: 'F', label: time.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }).replace(' at', '') },
+                                          { value: 'R', label: getRelativeTime(time) },
+                                      ],
+                                  });
+                              }
+
+                              render() {
+                                  const FormatDropdown = React.createElement('div', {
+                                      className: 'timestamp-input-group',
+                                      children: [
+                                          React.createElement('label', {
+                                              className: 'timestamp-input-label',
+                                              children: 'Format',
+                                          }),
+                                          React.createElement('div', {
+                                              className: 'timestamp-input-dropdown',
+                                              children: [
+                                                  React.createElement(Dropdown, {
+                                                      onChange: (format) => {
+                                                          this.setState({
+                                                              timestampFormat: format,
+                                                          });
+                                                          updateTimeFormat(format);
+                                                      },
+                                                      value: this.state.timestampFormat,
+                                                      options: this.state.formatOptions,
+                                                  }),
+                                              ],
+                                          }),
+                                      ],
+                                  });
+
+                                  const DatePicker = React.createElement('div', {
+                                      className: 'timestamp-input-group',
+                                      children: [
+                                          React.createElement('label', {
+                                              className: 'timestamp-input-label',
+                                              children: 'Date',
+                                          }),
+                                          React.createElement('input', {
+                                              className: 'timestamp-input',
+                                              type: 'date',
+                                              value: this.state.timestamp.toISOString().split('T')[0],
+                                              onChange: (e) => {
+                                                  const date = new Date(`${e.target.value}T${this.state.timestamp.toISOString().split('T')[1]}`);
+                                                  if (isValidDate(date))
+                                                      this.setState({
+                                                          timestamp: date,
+                                                          returnTimestamp: new Date(new Date(date).getTime() + new Date().getTimezoneOffset() * 60000),
+                                                      });
+                                              },
+                                          }),
+                                      ],
+                                  });
+
+                                  const TimePicker = React.createElement('div', {
+                                      className: 'timestamp-input-group',
+                                      children: [
+                                          React.createElement('label', {
+                                              className: 'timestamp-input-label',
+                                              children: 'Time',
+                                          }),
+                                          React.createElement('input', {
+                                              className: 'timestamp-input',
+                                              type: 'time',
+                                              value: this.state.timestamp.toISOString().split('T')[1].split('.')[0].split(':').slice(0, 2).join(':'),
+                                              onChange: (e) => {
+                                                  let date = new Date(`${this.state.timestamp.toISOString().split('T')[0]}T${e.target.value}:00.000Z`);
+                                                  if (isValidDate(date))
+                                                      this.setState({
+                                                          timestamp: date,
+                                                          returnTimestamp: new Date(new Date(date).getTime() + new Date().getTimezoneOffset() * 60000),
+                                                      });
+                                              },
+                                          }),
+                                      ],
+                                  });
+
+                                  return React.createElement('div', {
+                                      children: [DatePicker, TimePicker, FormatDropdown],
+                                  });
+                              }
+                          }
+
+                          Modals.showModal('Select Date and Time', [React.createElement(TimestampModalBody)], {
+                              confirmText: 'Enter',
+                              onConfirm: () => {
+                                  let ts_msg = `<t:${Math.floor(inputTimestamp.getTime() / 1000)}:${this.settings.timestampFormat}> `;
+
+                                  ComponentDispatch.dispatchToLastSubscribed(ComponentActions.INSERT_TEXT, { content: ts_msg, plainText: ts_msg });
+                              },
+                          });
+                      }
+
+                      patchButton() {
+                          const ChannelTextAreaButtons = WebpackModules.find((m) => m.type?.displayName === 'ChannelTextAreaButtons');
+                          const ChannelTextAreaContainer = WebpackModules.find((m) => m?.type?.render?.displayName === 'ChannelTextAreaContainer')?.type;
+                          const button = React.createElement(
+                              'button',
+                              {
+                                  className: 'timestamp-button',
+                                  type: 'button',
+                                  onClick: () => {
+                                      this.showTimestampModal();
+                                  },
+                              },
+                              React.createElement(
+                                  'svg',
+                                  {
+                                      role: 'img',
+                                      xmlns: 'http://www.w3.org/2000/svg',
+                                      viewBox: '0 0 512 512',
+                                  },
+                                  React.createElement('path', {
+                                      fill: 'currentColor',
+                                      d: 'M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z',
+                                  })
+                              )
+                          );
+
+                          Patcher.before(ChannelTextAreaContainer, 'render', (_, [props]) => {
+                              if (this.settings.showInAttachMenu) document.querySelector('.timestamp-button')?.remove();
+                              const { channel } = props;
+
+                              if (!this.settings.buttonOnRight && (canSendMessages(channel.id) || channel.type === 1) && !this.settings.showInAttachMenu) {
+                                  if (!!props.renderAttachButton && props.renderAttachButton.length == 1) {
+                                      this.forceOnRight = false;
+                                      let attachButton = props.renderAttachButton();
+                                      props.renderAttachButton = () => {
+                                          return React.createElement('div', {
+                                              className: 'channel-attach-button',
+                                              children: [attachButton, button],
+                                          });
+                                      };
+                                  } else this.forceOnRight = true;
+                              }
+                          });
+
+                          Patcher.after(ChannelTextAreaButtons, 'type', (_, [props], ret) => {
+                              if (this.settings.showInAttachMenu) document.querySelector('.timestamp-button')?.remove();
+                              const { channel } = props;
+                              this.settings.chatButtonsLength = ret?.props?.children?.length + 1 || 1;
+
+                              if ((this.settings.buttonOnRight || this.forceOnRight) && (canSendMessages(channel.id) || channel.type === 1) && !this.settings.showInAttachMenu) ret?.props?.children.splice(this.settings.buttonIndex, 0, button).join();
+                          });
+                      }
+
+                      patchMessageReplace() {
+                          const ChannelTextAreaContainer = WebpackModules.find((m) => m?.type?.render?.displayName === 'ChannelTextAreaContainer')?.type;
+
+                          class TimestampFomratsSelector extends React.Component {
+                              constructor(props) {
+                                  super(props);
+                              }
+
+                              componentDidMount() {
+                                  this.props.timestamps.forEach((ts, key) => {
+                                      this.props.onChange({
+                                          key,
+                                          value: `<t:${ts.timestamp}:${ts.timestampFormat}>`,
+                                      });
+                                  });
+                              }
+
+                              render() {
+                                  const timestampSelects = this.props.timestamps.map((ts, key) => {
+                                      return React.createElement('div', {
+                                          children: [
+                                              React.createElement(
+                                                  'span',
+                                                  {
+                                                      style: {
+                                                          fontWeight: '500',
+                                                      },
+                                                  },
+                                                  `${key + 1}: `
+                                              ),
+                                              React.createElement(
+                                                  'select',
+                                                  {
+                                                      className: 'select-timestamp',
+                                                      defaultValue: ts.timestampFormat,
+                                                      onChange: (e) => {
+                                                          this.props.onChange({ key, value: `<t:${ts.timestamp}:${e.target.value}>` });
+                                                      },
+                                                      value: ts.value,
+                                                  },
+                                                  ts.options.map((option) => {
+                                                      return React.createElement(
+                                                          'option',
+                                                          {
+                                                              value: option.value,
+                                                          },
+                                                          option.label
+                                                      );
+                                                  })
+                                              ),
+                                          ],
+                                      });
+                                  });
+
+                                  return React.createElement('div', {
+                                      className: 'timestamp-formats-wrapper',
+                                      children: [
+                                          React.createElement('div', {
+                                              className: 'timestamp-formats-selector',
+                                              children: [
+                                                  React.createElement(
+                                                      'span',
+                                                      {
+                                                          style: {
+                                                              fontWeight: '700',
+                                                              padding: '8px 12px',
+                                                              fontSize: '1.2rem',
+                                                          },
+                                                      },
+                                                      'Timestamp Formats: '
+                                                  ),
+                                                  React.createElement('div', {
+                                                      className: 'timestamp-formats-selects',
+                                                      children: timestampSelects,
+                                                  }),
+                                              ],
+                                          }),
+                                      ],
+                                  });
+                              }
+                          }
+
+                          const getTimestamp = (str) => {
+                              const d = Date.parse(str) / 1000;
+
+                              if (isNaN(d)) {
+                                  const timestring = str.match(/\b(24:00|2[0-3]:\d\d|[01]?\d((:\d\d)( ?(a|p)m?)?| ?(a|p)m?))\b/gi);
+                                  if (timestring) {
+                                      const time = timestring[0].split(':');
+                                      let dt = new Date();
+                                      if (time.length === 1) {
+                                          const ampm = time[0]?.match(/[a|p]m?/i);
+                                          let hours = parseInt(time[0]);
+
+                                          if (ampm) ampm[0].toLowerCase() === 'a' || ampm[0].toLowerCase() === 'am' ? (hours = hours === 12 ? 0 : hours) : (hours = hours === 12 ? 12 : hours + 12);
+
+                                          dt.setHours(hours);
+                                          dt.setMinutes(0);
+                                          dt.setSeconds(0);
+                                          dt.setMilliseconds(0);
+                                      } else {
+                                          const minutes = parseInt(time[1]);
+                                          const ampm = time[1]?.match(/[a|p]m?/i);
+                                          let hours = parseInt(time[0]);
+
+                                          if (ampm) ampm[0].toLowerCase() === 'a' || ampm[0].toLowerCase() === 'am' ? (hours = hours === 12 ? 0 : hours) : (hours = hours === 12 ? 12 : hours + 12);
+
+                                          dt.setHours(hours);
+                                          dt.setMinutes(minutes);
+                                          dt.setSeconds(0);
+                                          dt.setMilliseconds(0);
+                                      }
+
+                                      return dt;
+                                  }
+                              } else str = d;
+
+                              return str;
+                          };
+
+                          const getRelativeTime = (timestamp) => {
+                              const timeElapsed = timestamp - new Date();
+                              const units = {
+                                  year: 24 * 60 * 60 * 1000 * 365,
+                                  month: (24 * 60 * 60 * 1000 * 365) / 12,
+                                  day: 24 * 60 * 60 * 1000,
+                                  hour: 60 * 60 * 1000,
+                                  minute: 60 * 1000,
+                                  second: 1000,
+                              };
+
+                              for (let u in units) if (Math.abs(timeElapsed) > units[u] || u == 'second') return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(Math.round(timeElapsed / units[u]), u);
+                          };
+
+                          Patcher.after(ChannelTextAreaContainer, 'render', (_, [props], ret) => {
+                              const { textValue } = props;
+                              if (!textValue) return;
+
+                              if (/\{{(.*?)\}}/g.test(textValue)) {
+                                  let timestamps = [...textValue.matchAll(/\{{(.*?)\}}/g)]
+                                      .filter((m) => m[1] != '')
+                                      .map((m) => {
+                                          let timestamp = getTimestamp(m[1]);
+                                          if (isNaN(timestamp))
+                                              return {
+                                                  timestamp: new Date().getTime() / 1000,
+                                                  timestampFormat: 'F',
+                                                  options: [{ value: 'F', label: 'Error formating this timestamp' }],
+                                              };
+
+                                          if (!(timestamp instanceof Date)) timestamp = new Date(timestamp * 1000);
+
+                                          return {
+                                              timestamp: timestamp.getTime() / 1000,
+                                              timestampFormat: this.settings.timestampFormat,
+                                              options: [
+                                                  { value: 't', label: timestamp.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' }).replace(' at', '') },
+                                                  { value: 'T', label: timestamp.toLocaleString(undefined, { timeStyle: 'medium' }).replace(' at', '') },
+                                                  { value: 'd', label: timestamp.toLocaleString(undefined, { dateStyle: 'short' }).replace(' at', '') },
+                                                  { value: 'D', label: timestamp.toLocaleString(undefined, { dateStyle: 'long' }).replace(' at', '') },
+                                                  { value: 'f', label: timestamp.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' }).replace(' at', '') },
+                                                  { value: 'F', label: timestamp.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }).replace(' at', '') },
+                                                  { value: 'R', label: getRelativeTime(timestamp) },
+                                              ],
+                                          };
+                                      });
+
+                                  if (timestamps.length > 0)
+                                      ret.props.children.push(
+                                          React.createElement(TimestampFomratsSelector, {
+                                              timestamps,
+                                              onChange: (opts) => {
+                                                  this.sendFomrmatOptions[opts.key] = opts.value;
+                                              },
+                                          })
+                                      );
+                              }
+
+                              return ret;
+                          });
+
+                          Patcher.before(MessageActions, 'sendMessage', (_, [__, props], ret) => {
+                              let { content } = props;
+
+                              if (/\{{(.*?)\}}/g.test(content)) {
+                                  let timestamps = [...content.matchAll(/\{{(.*?)\}}/g)].filter((m) => m[1] != '');
+                                  let n = 0;
+                                  if (timestamps.length > 0)
+                                      content = content.replace(/\{{(.*?)\}}/g, (match, p1) => {
+                                          return this.sendFomrmatOptions[n++] || match;
+                                      });
+                              }
+                              props.content = content;
+                          });
+                      }
+
+                      patchAttachMenu(attachMenu) {
+                          const menuOption = DOMTools.createElement(`<div class="item-1OdjEX labelContainer-2vJzYL colorDefault-CDqZdO" role="menuitem" id="channel-attach-TIMESTAMP" tabindex="-1" data-menu-item="true"> <div class="label-2gNW3x"> <div class="optionLabel-1o-h-l"> <svg class="optionIcon-1Ft8w0" aria-hidden="false" width="16" height="16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"> <path fill="currentColor" d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"></path> </svg> <div class="optionName-1ebPjH">Add Timestamp</div> </div> </div> </div>`);
+
+                          attachMenu.querySelector('#channel-attach-upload-file').addEventListener('mouseenter', () => {
+                              attachMenu.querySelector('#channel-attach-upload-file').classList.add('focused-3qFvc8');
+                          });
+                          menuOption.addEventListener('mouseenter', () => {
+                              attachMenu.querySelector('#channel-attach-upload-file').classList.remove('focused-3qFvc8');
+                              menuOption.classList.add('focused-3qFvc8');
+                          });
+                          menuOption.addEventListener('mouseleave', () => {
+                              menuOption.classList.remove('focused-3qFvc8');
+                          });
+                          menuOption.addEventListener('click', () => {
+                              this.showTimestampModal();
+                              attachMenu.remove();
+                          });
+
+                          if (!attachMenu?.querySelector('#channel-attach-TIMESTAMP')) attachMenu?.prepend(menuOption);
+                      }
+
+                      observer(e) {
+                          const attachMenu = e.target.querySelector('#channel-attach');
+                          if (attachMenu && this.settings.showInAttachMenu) this.patchAttachMenu(attachMenu.querySelector('div'));
+                      }
+                  };
+              };
+              return plugin(Plugin, Api);
+          })(global.ZeresPluginLibrary.buildPlugin(config));
 })();
 /*@end@*/
